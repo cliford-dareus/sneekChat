@@ -51,7 +51,6 @@ socketIO.on('connection', (socket) => {
   socket.join(socket.userId);
 
   socket.on('private_message',({msg, to}) => {
-    // console.log(to)
     socketIO.to(to).to(socket.userId).emit('private_message', {
       msg,
       from: socket.userId,
@@ -62,7 +61,7 @@ socketIO.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('🔥: A user disconnected');
-
+    
     users = users.filter(user => user.socketID !== socket.id);
     socketIO.emit("newUserResponse", users);
     socket.disconnect();

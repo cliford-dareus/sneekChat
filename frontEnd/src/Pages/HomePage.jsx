@@ -1,53 +1,39 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef} from 'react';
 import { useNavigate } from "react-router-dom";
 import { useGlobalContext } from '../Context/GlobalContext';
 import axios from 'axios';
 import socket from '../Utils/socket';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChatRecentContainer, ChatRecentContent, ChatRecentPic, HomePageContainer, HomePageFriendContainer, HomePageFriendList, HomePageFriendPicContainer, HomePageMessageContainer, HomePageTopContainer } from '../Utils/Styles/Home.style';
 
 const HomePage = () => {
-  const [ users, setUsers ] = useState([]);
-  const [ chats, setChats ] = useState([]);
   const { user } = useGlobalContext();
   const navigate = useNavigate();
-  const socket = useRef();
+  const queryClient = useQueryClient()
 
-  const getAllUsers = async () => {
-      try {
-        const { data } = await axios.get(`http://localhost:5000/api/v1/users`, { 
-        withCredentials: true,
-        credentials: 'include'});
-        const filteredUsers = data.users.filter((users)=> users._id !== user.userId)
-        setUsers(filteredUsers);
-      } catch (error) {
-        console.log(error);
-      };  
+  const getAllUsers = () => {
+    const data  = axios.get(`http://localhost:5000/api/v1/users`, { 
+    withCredentials: true,
+    credentials: 'include'})
+    .then((res) => res)
+    return data;
   };
 
   const getAllChats = async () => {
-    try {
-      const { data } = await axios.post(`http://localhost:5000/api/v1/msg/getAllmsg`, {from: user.userId}, { 
-        withCredentials: true,
-        credentials: 'include'});
-        console.log(data.messages);
-        setChats(data.messages);
-    } catch (error) {
-      console.log(error);
-    }
+    const { data } = await axios.post(`http://localhost:5000/api/v1/msg/getAllmsg`, {from: user.userId}, { 
+    withCredentials: true,
+    credentials: 'include'});
+    return data
   };
+
+  const userQuery = useQuery({ queryKey:['Users'], queryFn: getAllUsers });
+  const chatQuery = useQuery({ queryKey:['Chat'], queryFn: getAllChats });
+  queryClient.refetchQueries({ queryKey: ['Chat'] });
 
   const startChat = async (id) => {
-    try {
       navigate(`/chat/?${id}`);
-    } catch (error) {
-      console.log(error);
-    };
+      console.log(id)
   };
-
-  useEffect(()=>{
-    getAllUsers();
-    getAllChats();
-  },[]);
 
   return (
     <HomePageContainer>
@@ -58,7 +44,9 @@ const HomePage = () => {
           <h4>New Sneeks</h4>
 
           <HomePageFriendList>
-              {users.map((user) => {
+              {userQuery.data?.data.users
+                .filter((users)=> users._id !== user.userId)
+                .map((user) => {
               return(
                 <HomePageFriendPicContainer
                   onClick={() => startChat(user._id)}
@@ -73,8 +61,9 @@ const HomePage = () => {
 
       <HomePageMessageContainer>
         <h3>Recent Chat</h3>
-        {chats && chats.map((chat)=>{
+        {chatQuery.data?.messages?.map((chat)=>{
           const { message, sender } = chat;
+          
           return(
             <ChatRecentContainer
               onClick={() => startChat(sender)}
