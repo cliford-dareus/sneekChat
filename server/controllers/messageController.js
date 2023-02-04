@@ -2,7 +2,7 @@ const Messages = require("../models/message");
 
 module.exports.getMessages = async (req, res, next) => {
   try {
-    const { from, to } = req.body;
+    const { from, to } = req.query;
 
     const messages = await Messages.find({
       users: {
@@ -24,10 +24,10 @@ module.exports.getMessages = async (req, res, next) => {
 
 module.exports.getAllMessage = async (req, res, next) => { 
     try {
-        const { from } = req.body;
+        const { user } = req.query;
         const messages = await Messages.find({
           users: {
-            $all: [from]
+            $all: [user]
           }
         });
 

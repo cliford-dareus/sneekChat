@@ -38,7 +38,7 @@ let users = [];
 socketIO.use((socket, next) => {
   const username = socket.handshake.auth.username;
   const userId = socket.handshake.auth.userId;
-  // console.log(socket.handshake.auth)
+  console.log(socket.handshake.auth);
   if (!username) {
     return next(new Error("invalid username"));
   }
@@ -52,6 +52,7 @@ socketIO.on("connection", (socket) => {
   socket.join(socket.userId);
 
   socket.on("private_message", ({ msg, to }) => {
+    console.log(msg);
     socketIO.to(to).to(socket.userId).emit("private_message", {
       msg,
       from: socket.userId,

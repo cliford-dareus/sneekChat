@@ -1,6 +1,6 @@
 import React from "react";
-import { useState } from "react";
 import axios from "axios";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import FormInput from "../Components/FormInput";
 import { Form } from "../Utils/Styles/Global.style";
@@ -13,6 +13,7 @@ import {
 } from "../Utils/Styles/Register.style";
 import { useMutation } from "@tanstack/react-query";
 import { config } from "../helper/axios.config";
+import { connectSocket } from "../Utils/socket";
 
 const LoginPage = () => {
   const Navigate = useNavigate();
@@ -32,6 +33,9 @@ const LoginPage = () => {
     {
       onSuccess: (data) => {
         localStorage.setItem("user", JSON.stringify(data.data.user));
+        console.log(data.data.user.username);
+        connectSocket(data?.data?.user);
+        Navigate("/");
       },
     }
   );
@@ -47,9 +51,8 @@ const LoginPage = () => {
 
     try {
       mutation.mutate(logInUser);
+
       setUserInfo({ username: "", password: "" });
-      // connectSocket(mutation.data.user.username);
-      Navigate("/");
     } catch (error) {
       console.log(error);
     }

@@ -1,20 +1,40 @@
-import React, { useEffect, useRef} from 'react';
+import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import socket from '../Utils/socket';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChatRecentContainer, ChatRecentContent, ChatRecentPic, HomePageContainer, HomePageFriendContainer, HomePageFriendList, HomePageFriendPicContainer, HomePageMessageContainer, HomePageTopContainer } from '../Utils/Styles/Home.style';
-import { getAllChats, getAllUsers } from '../Utils/chat.api';
+// import socket from '../Utils/socket';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  ChatRecentContainer,
+  ChatRecentContent,
+  ChatRecentPic,
+  HomePageContainer,
+  HomePageFriendContainer,
+  HomePageFriendList,
+  HomePageFriendPicContainer,
+  HomePageMessageContainer,
+  HomePageTopContainer,
+} from "../Utils/Styles/Home.style";
+import { getAllChats, getAllUsers } from "../Utils/chat.api";
+import { useLocalStorage } from "../Utils/useLocalStorage";
+import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 
 const HomePage = () => {
+  const useStorage = new useLocalStorage();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   // queryClient.invalidateQueries('Users');
 
-  const userQuery = useQuery(['Users'], getAllUsers );
-  const chatQuery = useQuery(['Chat'], getAllChats );
+  const userQuery = useQuery(["Users"], getAllUsers);
+  const chatQuery = useQuery(
+    ["Chat"],
+    () => getAllChats(useStorage.getUserId()),
+    {
+      onSuccess: (data) => console.log(data),
+    }
+  );
 
   const startChat = async (id) => {
-      navigate(`/chat/?${id}`);
+    navigate(`/chat/?${id}`);
   };
 
   return (
@@ -26,37 +46,32 @@ const HomePage = () => {
           <h3>New Sneeks</h3>
 
           <HomePageFriendList>
-              {userQuery.data?.data.users
-                .filter((users)=> users._id)
-                .map((user) => {
-              return(
-                <div key={user._id}>
-                  <HomePageFriendPicContainer
-                    onClick={() => startChat(user._id)}
-                  >
-                  </HomePageFriendPicContainer>
-                  <p>{user.username}</p>
-                  <div
+            {userQuery.data?.data.users
+              .filter((users) => users._id)
+              .map((user) => {
+                return (
+                  <div key={user._id}>
+                    <HomePageFriendPicContainer
+                      onClick={() => startChat(user._id)}
+                    ></HomePageFriendPicContainer>
+                    <p>{user.username}</p>
+                    <div
                     // Notifications div
-                  >
+                    ></div>
                   </div>
-                </div>
-                
-              )
-            })}
+                );
+              })}
           </HomePageFriendList>
         </HomePageFriendContainer>
       </HomePageTopContainer>
 
       <HomePageMessageContainer>
         <h3>Recent Chat</h3>
-        {chatQuery.data?.messages?.map((chat)=>{
+        {chatQuery?.data?.data.messages.map((chat) => {
           const { message, sender } = chat;
-          
-          return(
-            <ChatRecentContainer
-              onClick={() => startChat(sender)}
-            >
+
+          return (
+            <ChatRecentContainer onClick={() => startChat(sender)}>
               <ChatRecentPic></ChatRecentPic>
               <ChatRecentContent>
                 <h4>Sender Name</h4>
@@ -64,7 +79,7 @@ const HomePage = () => {
               </ChatRecentContent>
               <span>1 day ago</span>
             </ChatRecentContainer>
-          )
+          );
         })}
       </HomePageMessageContainer>
     </HomePageContainer>
