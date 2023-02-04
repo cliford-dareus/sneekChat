@@ -13,7 +13,7 @@ const {
 }= require('../controllers/userController');
 
 router
-    .route('/')
+    .route('/all')
     .get( authenticateUser, getAllUsers ); //Add the Premission// roles later
 router
     .route('/showMe')

@@ -1,58 +1,47 @@
-import React, { useRef} from 'react';
+import React, { useEffect, useRef} from 'react';
 import { useNavigate } from "react-router-dom";
-import { useGlobalContext } from '../Context/GlobalContext';
-import axios from 'axios';
 import socket from '../Utils/socket';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChatRecentContainer, ChatRecentContent, ChatRecentPic, HomePageContainer, HomePageFriendContainer, HomePageFriendList, HomePageFriendPicContainer, HomePageMessageContainer, HomePageTopContainer } from '../Utils/Styles/Home.style';
+import { getAllChats, getAllUsers } from '../Utils/chat.api';
 
 const HomePage = () => {
-  const { user } = useGlobalContext();
   const navigate = useNavigate();
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
+  // queryClient.invalidateQueries('Users');
 
-  const getAllUsers = () => {
-    const data  = axios.get(`http://localhost:5000/api/v1/users`, { 
-    withCredentials: true,
-    credentials: 'include'})
-    .then((res) => res)
-    return data;
-  };
-
-  const getAllChats = async () => {
-    const { data } = await axios.post(`http://localhost:5000/api/v1/msg/getAllmsg`, {from: user.userId}, { 
-    withCredentials: true,
-    credentials: 'include'});
-    return data
-  };
-
-  const userQuery = useQuery({ queryKey:['Users'], queryFn: getAllUsers });
-  const chatQuery = useQuery({ queryKey:['Chat'], queryFn: getAllChats });
-  queryClient.refetchQueries({ queryKey: ['Chat'] });
+  const userQuery = useQuery(['Users'], getAllUsers );
+  const chatQuery = useQuery(['Chat'], getAllChats );
 
   const startChat = async (id) => {
       navigate(`/chat/?${id}`);
-      console.log(id)
   };
 
   return (
     <HomePageContainer>
       <HomePageTopContainer>
         <h3>Welcome, back!</h3>
-        <strong>{user.username}</strong>
+        <strong></strong>
         <HomePageFriendContainer>
-          <h4>New Sneeks</h4>
+          <h3>New Sneeks</h3>
 
           <HomePageFriendList>
               {userQuery.data?.data.users
-                .filter((users)=> users._id !== user.userId)
+                .filter((users)=> users._id)
                 .map((user) => {
               return(
-                <HomePageFriendPicContainer
-                  onClick={() => startChat(user._id)}
-                >
-                  {user.username}
-                </HomePageFriendPicContainer>
+                <div key={user._id}>
+                  <HomePageFriendPicContainer
+                    onClick={() => startChat(user._id)}
+                  >
+                  </HomePageFriendPicContainer>
+                  <p>{user.username}</p>
+                  <div
+                    // Notifications div
+                  >
+                  </div>
+                </div>
+                
               )
             })}
           </HomePageFriendList>

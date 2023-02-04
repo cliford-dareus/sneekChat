@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef }  from 'react';
 import socket from '../Utils/socket';
 import axios from 'axios';
 import { useLocation } from "react-router-dom";
-import { useGlobalContext } from '../Context/GlobalContext';
 import { useQuery, QueryClient, useQueryClient } from '@tanstack/react-query';
 import { Form, InputField } from '../Utils/Styles/Global.style';
 import { ChatBodyContainer, ChatBubble, ChatPageContainer, ChatPageForm, ChatPageTop } from '../Utils/Styles/Chat.style';
@@ -11,7 +10,6 @@ const ChatPage = () => {
   const [ arrivalMsgs, setArrivalMsgs ] = useState(null);
   const [ messages, setMessages ] = useState([]); //Add Timestamps for the messages
   const [ text, setText ] = useState('');
-  const { user } = useGlobalContext();
   const scrollRef = useRef();
   
   const params = useLocation();
