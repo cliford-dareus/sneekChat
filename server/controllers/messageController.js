@@ -2,7 +2,7 @@ const Messages = require("../models/message");
 
 module.exports.getMessages = async (req, res, next) => {
   try {
-    const { from, to } = req.body;
+    const { from, to } = req.query;
 
     const messages = await Messages.find({
       users: {
@@ -22,49 +22,46 @@ module.exports.getMessages = async (req, res, next) => {
   }
 };
 
-module.exports.getAllMessage = async (req, res, next) => { 
-    try {
-        const { from } = req.body;
-        const messages = await Messages.find({
-          users: {
-            $all: [from]
-          }
-        });
+module.exports.getAllMessage = async (req, res, next) => {
+  try {
+    const { user } = req.query;
+    const messages = await Messages.find({
+      users: {
+        $all: [user],
+      },
+    });
 
-        // console.log(messages)
-        
-        res.status(201).json({ messages });
-    } catch (error) {
-        next(error);
-    };
+    res.status(201).json({ messages });
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports.addMessage = async (req, res, next) => {
-  try {
-    const { from, to, message } = req.body;
+  const { from, to, message } = req.body;
 
+  try {
     const messages = await Messages.findOne({
       users: {
         $all: [from, to],
-      }
+      },
     });
-    
-    // console.log(message)
-    
-    if(!messages){
-        await Messages.create({
-            message: [message],
-            users: [from, to],
-            sender: from,
-        });
 
-        console.log(message)
-    };
     
+    if (messages === null) {
+      const msg = await Messages.create({
+        message: [message],
+        users: [from, to],
+        sender: from,
+      });
+
+      // console.log(msg);
+      res.status(200).json({ msg });
+    }
+
     messages.message = [...messages.message, message];
     await messages.save();
-    // if (data) return res.json({ msg: "Message added successfully." });
-    // else return res.json({ msg: "Failed to add message to the database" });
+    res.status(200).json({ messages });
   } catch (ex) {
     next(ex);
   }
