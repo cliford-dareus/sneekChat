@@ -32,30 +32,27 @@ const ChatPage = () => {
     queryKey: ["Pivate_Chat", to],
   });
 
-  const msgQuery = useQuery(
-    {
-      queryKey: ["Private_Chat", to],
-      queryFn: () => getAllPastMessage(user.userId, to),
-      onSuccess: (data) => {
-        // setMessages(data.data[0].message);
-      }
-    }
-  );
+  const msgQuery = useQuery({
+    queryKey: ["Private_Chat", to],
+    queryFn: () => getAllPastMessage(user.userId, to),
+    onSuccess: (data) => {
+      setMessages(data.data[0].message);
+    },
+  });
 
-  const sendMsgMutation = useMutation(
-    {
-      mutationFn: ({ userId, to, text, time }) => {
-        return sendMsg(userId, to, text, time);
-      },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: ["Private_Chat", to] });
-        queryClient.invalidateQueries({ queryKey: ["Chat"] });
-      },
-    }
-  );
+  const sendMsgMutation = useMutation({
+    mutationFn: ({ userId, to, text, time }) => {
+      return sendMsg(userId, to, text, time);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["Private_Chat", to] });
+      queryClient.invalidateQueries({ queryKey: ["Chat"] });
+    },
+  });
 
   const sendmessages = async (e) => {
     e.preventDefault();
+    setMessages([]);
     setText("");
     const today = new Date();
     const time = today.toLocaleTimeString();
@@ -68,9 +65,9 @@ const ChatPage = () => {
     });
 
     const msgs = { msg: text, fromSelf: user.userId, time };
-    setMessages((prev) => [...prev, msgs]);
-
     sendMsgMutation.mutate({ userId: user.userId, to, text, time });
+
+    setMessages((prev) => [...prev, msgs]);
   };
 
   const handleChange = (e) => {
@@ -78,9 +75,9 @@ const ChatPage = () => {
     setText(e.target.value);
   };
 
-  useEffect(()=> {
+  useEffect(() => {
     msgQuery.isSuccess && setMessages(msgQuery?.data?.data[0]?.message);
-  },[msgQuery.isSuccess])
+  }, [msgQuery.isSuccess]);
 
   useEffect(() => {
     socket.on("private_message", ({ msg, from, time }) => {
@@ -109,7 +106,8 @@ const ChatPage = () => {
       </ChatPageTop>
 
       <ChatBodyContainer>
-        {msgQuery.isSuccess && messages?.map((item) => {
+        {msgQuery.isSuccess &&
+          messages?.map((item) => {
             const isFromSelf = item.fromSelf === user.userId;
             return (
               <ChatBubble fromSelf={isFromSelf} ref={scrollRef}>

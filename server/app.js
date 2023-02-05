@@ -52,7 +52,6 @@ socketIO.on("connection", (socket) => {
   socket.join(socket.userId);
 
   socket.on("private_message", ({ msg, to }) => {
-    console.log(msg);
     socketIO.to(to).to(socket.userId).emit("private_message", {
       msg,
       from: socket.userId,
