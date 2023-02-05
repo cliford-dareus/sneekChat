@@ -12,7 +12,7 @@ import {
   ChatPageTop,
 } from "../Utils/Styles/Chat.style";
 import { getAllPastMessage, sendMsg } from "../Utils/chat.api";
-import { useLocalStorage } from "../Utils/useLocalStorage";
+import { useLocalStorage } from "../Utils/hooks/useLocalStorage";
 
 const ChatPage = () => {
   const useStorage = new useLocalStorage();
@@ -36,8 +36,13 @@ const ChatPage = () => {
     queryKey: ["Private_Chat", to],
     queryFn: () => getAllPastMessage(user.userId, to),
     onSuccess: (data) => {
-      setMessages(data.data[0].message);
+      if (!messages && data?.data.length == 0){
+        setMessages(data?.data[0]?.message);
+        return
+      }
     },
+    // staleTime: 5000, 
+    refetchInterval: 10000
   });
 
   const sendMsgMutation = useMutation({
@@ -52,7 +57,6 @@ const ChatPage = () => {
 
   const sendmessages = async (e) => {
     e.preventDefault();
-    setMessages([]);
     setText("");
     const today = new Date();
     const time = today.toLocaleTimeString();
@@ -65,8 +69,8 @@ const ChatPage = () => {
     });
 
     const msgs = { msg: text, fromSelf: user.userId, time };
-    sendMsgMutation.mutate({ userId: user.userId, to, text, time });
 
+    sendMsgMutation.mutate({ userId: user.userId, to, text, time });
     setMessages((prev) => [...prev, msgs]);
   };
 
@@ -76,11 +80,12 @@ const ChatPage = () => {
   };
 
   useEffect(() => {
-    msgQuery.isSuccess && setMessages(msgQuery?.data?.data[0]?.message);
+    if (!messages == 0 && msgQuery?.data?.data.length == 0) return;
+    setMessages(msgQuery?.data?.data[0]?.message);
   }, [msgQuery.isSuccess]);
 
   useEffect(() => {
-    socket.on("private_message", ({ msg, from, time }) => {
+    socket.on("private_message", ({ msg, from, reciepient, time }) => {
       if (from === to) {
         setArrivalMsgs({ msg, fromSelf: from, time });
       }
@@ -101,16 +106,16 @@ const ChatPage = () => {
         {userData?.data.users
           .filter((user) => user._id === to)
           .map((user) => (
-            <strong>{user.username}</strong>
+            <strong key={user._id}>{user.username}</strong>
           ))}
       </ChatPageTop>
 
       <ChatBodyContainer>
-        {msgQuery.isSuccess &&
+        {msgQuery.isFetched &&
           messages?.map((item) => {
             const isFromSelf = item.fromSelf === user.userId;
             return (
-              <ChatBubble fromSelf={isFromSelf} ref={scrollRef}>
+              <ChatBubble key={item._id} fromSelf={isFromSelf} ref={scrollRef}>
                 <p>{item.msg}</p>
               </ChatBubble>
             );

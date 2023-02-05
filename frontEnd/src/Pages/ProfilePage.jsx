@@ -9,8 +9,7 @@ import { ProfileContainer, ProfileContentContainer, ProfileDarkmode, ProfilePage
 const ProfilePage = () => {
 
   const userQuery = useQuery(['Users'])
-  console.log(userQuery.data)
-
+  
   return (
     <ProfilePageContainer>
       <ProfileContainer>

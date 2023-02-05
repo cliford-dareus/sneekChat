@@ -51,17 +51,16 @@ socketIO.on("connection", (socket) => {
   console.log(`⚡: ${socket.username} ${socket.userId}user just connected!`);
   socket.join(socket.userId);
 
-  socket.on("private_message", ({ msg, to }) => {
+  socket.on("private_message", ({ msg, to, time }) => {
+    console.log(time)
     socketIO.to(to).to(socket.userId).emit("private_message", {
       msg,
       from: socket.userId,
-      to,
+      reciepient: to,
+      time
     });
 
-    socketIO.to(to).emit("notification", {
-      from: socket.userId,
-      newMessage: true,
-    });
+    notification(socket, to)
   });
 
   socket.on("disconnect", () => {
@@ -72,6 +71,13 @@ socketIO.on("connection", (socket) => {
     socket.disconnect();
   });
 });
+
+const notification = async (socket, to) => {
+  setTimeout(() => socketIO.to(to).emit("notification", {
+      from: socket.userId,
+      newMessage: true,
+    }), 100)
+}
 
 app.use(cookieParser(process.env.JWT_SECRET));
 app.use(morgan("combined"));

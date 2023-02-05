@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { connectSocket, socket } from "../Utils/socket";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "react-router-dom";
 import {
   ChatRecentContainer,
   ChatRecentContent,
@@ -13,13 +14,16 @@ import {
   HomePageMessageContainer,
   HomePageTopContainer,
 } from "../Utils/Styles/Home.style";
-import { getAllChats, getAllUsers } from "../Utils/chat.api";
-import { useLocalStorage } from "../Utils/useLocalStorage";
+import { getAllChats } from "../Utils/chat.api";
+import { useLocalStorage } from "../Utils/hooks/useLocalStorage";
+import { getAllUsers } from "../Utils/user.api";
 
 const HomePage = () => {
   const [msgNotification, setMsgNotification] = useState([]);
   const useStorage = new useLocalStorage();
   const navigate = useNavigate();
+  const params = useLocation();
+
   const userQuery = useQuery(["Users"], getAllUsers);
 
   const chatQuery = useQuery({
@@ -44,11 +48,12 @@ const HomePage = () => {
         return msg.id == from;
       });
 
-      console.log(isAlreadyDisplay);
-
-      if (isAlreadyDisplay.length == 0) {
-        console.log("runnig");
+      if (isAlreadyDisplay.length === 0 && params.pathname === "/") {
         setMsgNotification([...msgNotification, { id: from, newMessage }]);
+        localStorage.setItem(
+          "notification",
+          JSON.stringify({ from, newMessage })
+        );
       }
     });
   }, []);
@@ -84,16 +89,18 @@ const HomePage = () => {
       <HomePageMessageContainer>
         <h3>Recent Chat</h3>
         {chatQuery?.data?.data.messages.map((chat) => {
-          const { message, sender } = chat;
-
+          const { message, sender, time } = chat;
           return (
-            <ChatRecentContainer onClick={() => startChat(sender)}>
+            <ChatRecentContainer
+              key={chat._id}
+              onClick={() => startChat(sender)}
+            >
               <ChatRecentPic></ChatRecentPic>
               <ChatRecentContent>
                 <h4>Sender Name</h4>
                 <p>{message[message.length - 1].msg}</p>
               </ChatRecentContent>
-              <span>1 day ago</span>
+              <span>{message[message.length - 1].time}</span>
             </ChatRecentContainer>
           );
         })}

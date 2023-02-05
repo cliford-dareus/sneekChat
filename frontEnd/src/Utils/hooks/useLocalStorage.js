@@ -1,14 +1,16 @@
 export class useLocalStorage {
-  constructor() {}
+  constructor() {
+    this.storage = localStorage.getItem("user") || null;
+  }
   getUserId() {
-    const user = localStorage.getItem("user")
+    const user = this.storage
       ? JSON.parse(localStorage.getItem("user"))
       : [];
     return user?.userId;
   }
 
   getUser() {
-    const user = localStorage.getItem("user")
+    const user = this.storage
       ? JSON.parse(localStorage.getItem("user"))
       : [];
     return user;

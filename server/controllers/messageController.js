@@ -38,28 +38,30 @@ module.exports.getAllMessage = async (req, res, next) => {
 };
 
 module.exports.addMessage = async (req, res, next) => {
-  try {
-    const { from, to, message } = req.body;
+  const { from, to, message } = req.body;
 
+  try {
     const messages = await Messages.findOne({
       users: {
         $all: [from, to],
       },
     });
 
-    if (!messages) {
-      await Messages.create({
+    
+    if (messages === null) {
+      const msg = await Messages.create({
         message: [message],
         users: [from, to],
         sender: from,
       });
 
-      console.log(message);
+      // console.log(msg);
+      res.status(200).json({ msg });
     }
 
     messages.message = [...messages.message, message];
     await messages.save();
-   res.status(200).json({ messages });
+    res.status(200).json({ messages });
   } catch (ex) {
     next(ex);
   }

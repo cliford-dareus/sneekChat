@@ -13,7 +13,6 @@ import {
 } from "../Utils/Styles/Register.style";
 import { useMutation } from "@tanstack/react-query";
 import { config } from "../helper/axios.config";
-import { connectSocket } from "../Utils/socket";
 
 const LoginPage = () => {
   const Navigate = useNavigate();
