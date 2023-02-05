@@ -22,21 +22,19 @@ module.exports.getMessages = async (req, res, next) => {
   }
 };
 
-module.exports.getAllMessage = async (req, res, next) => { 
-    try {
-        const { user } = req.query;
-        const messages = await Messages.find({
-          users: {
-            $all: [user]
-          }
-        });
+module.exports.getAllMessage = async (req, res, next) => {
+  try {
+    const { user } = req.query;
+    const messages = await Messages.find({
+      users: {
+        $all: [user],
+      },
+    });
 
-        // console.log(messages)
-        
-        res.status(201).json({ messages });
-    } catch (error) {
-        next(error);
-    };
+    res.status(201).json({ messages });
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports.addMessage = async (req, res, next) => {
@@ -46,25 +44,22 @@ module.exports.addMessage = async (req, res, next) => {
     const messages = await Messages.findOne({
       users: {
         $all: [from, to],
-      }
+      },
     });
-    
-    // console.log(message)
-    
-    if(!messages){
-        await Messages.create({
-            message: [message],
-            users: [from, to],
-            sender: from,
-        });
 
-        console.log(message)
-    };
-    
+    if (!messages) {
+      await Messages.create({
+        message: [message],
+        users: [from, to],
+        sender: from,
+      });
+
+      console.log(message);
+    }
+
     messages.message = [...messages.message, message];
     await messages.save();
-    // if (data) return res.json({ msg: "Message added successfully." });
-    // else return res.json({ msg: "Failed to add message to the database" });
+   res.status(200).json({ messages });
   } catch (ex) {
     next(ex);
   }

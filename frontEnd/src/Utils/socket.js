@@ -4,7 +4,6 @@ const URL = "http://localhost:5000";
 const socket = io(URL, { autoConnect: true });
 
 const connectSocket = ({ username, userId }) => {
-    console.log(username, userId)
   socket.auth = { username, userId };
   socket.connect();
 };

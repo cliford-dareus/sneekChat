@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { socket } from "../Utils/socket";
-import axios from "axios";
 import { useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Form, InputField } from "../Utils/Styles/Global.style";
@@ -12,14 +11,14 @@ import {
   ChatPageForm,
   ChatPageTop,
 } from "../Utils/Styles/Chat.style";
-import { getAllPastMessage } from "../Utils/chat.api";
+import { getAllPastMessage, sendMsg } from "../Utils/chat.api";
 import { useLocalStorage } from "../Utils/useLocalStorage";
 
 const ChatPage = () => {
   const useStorage = new useLocalStorage();
   const [user, setUser] = useState(useStorage.getUser());
   const [arrivalMsgs, setArrivalMsgs] = useState(null);
-  const [messages, setMessages] = useState([]); //Add Timestamps for the messages
+  const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const scrollRef = useRef();
 
@@ -27,15 +26,30 @@ const ChatPage = () => {
   const to = params.search.slice(1);
 
   const queryClient = useQueryClient();
-  const data = queryClient.getQueryData(["Users"]);
+  const userData = queryClient.getQueryData(["Users"]);
+
+  queryClient.invalidateQueries({
+    queryKey: ["Pivate_Chat", to],
+  });
 
   const msgQuery = useQuery(
-    ["Private_Chat"],
-    () => getAllPastMessage(user.userId, to),
     {
+      queryKey: ["Private_Chat", to],
+      queryFn: () => getAllPastMessage(user.userId, to),
       onSuccess: (data) => {
-        console.log(data)
-        setMessages(data?.data[0].message);
+        // setMessages(data.data[0].message);
+      }
+    }
+  );
+
+  const sendMsgMutation = useMutation(
+    {
+      mutationFn: ({ userId, to, text, time }) => {
+        return sendMsg(userId, to, text, time);
+      },
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({ queryKey: ["Private_Chat", to] });
+        queryClient.invalidateQueries({ queryKey: ["Chat"] });
       },
     }
   );
@@ -43,7 +57,6 @@ const ChatPage = () => {
   const sendmessages = async (e) => {
     e.preventDefault();
     setText("");
-
     const today = new Date();
     const time = today.toLocaleTimeString();
 
@@ -56,23 +69,18 @@ const ChatPage = () => {
 
     const msgs = { msg: text, fromSelf: user.userId, time };
     setMessages((prev) => [...prev, msgs]);
-    console.log("message sent");
 
-    await axios.post(`http://localhost:5000/api/v1/msg/addmsg`, {
-      from: user.userId,
-      to: to,
-      message: {
-        msg: text,
-        fromSelf: user.userId,
-        time: time,
-      },
-    });
+    sendMsgMutation.mutate({ userId: user.userId, to, text, time });
   };
 
   const handleChange = (e) => {
     e.preventDefault();
     setText(e.target.value);
   };
+
+  useEffect(()=> {
+    msgQuery.isSuccess && setMessages(msgQuery?.data?.data[0]?.message);
+  },[msgQuery.isSuccess])
 
   useEffect(() => {
     socket.on("private_message", ({ msg, from, time }) => {
@@ -93,7 +101,7 @@ const ChatPage = () => {
   return (
     <ChatPageContainer>
       <ChatPageTop>
-        {data?.data.users
+        {userData?.data.users
           .filter((user) => user._id === to)
           .map((user) => (
             <strong>{user.username}</strong>
@@ -101,14 +109,14 @@ const ChatPage = () => {
       </ChatPageTop>
 
       <ChatBodyContainer>
-        {messages?.map((item) => {
-          const isFromSelf = item.fromSelf === user.userId;
-          return (
-            <ChatBubble fromSelf={isFromSelf} ref={scrollRef}>
-              <p>{item.msg}</p>
-            </ChatBubble>
-          );
-        })}
+        {msgQuery.isSuccess && messages?.map((item) => {
+            const isFromSelf = item.fromSelf === user.userId;
+            return (
+              <ChatBubble fromSelf={isFromSelf} ref={scrollRef}>
+                <p>{item.msg}</p>
+              </ChatBubble>
+            );
+          })}
       </ChatBodyContainer>
       <ChatPageForm>
         <Form

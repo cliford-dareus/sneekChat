@@ -33,8 +33,6 @@ const LoginPage = () => {
     {
       onSuccess: (data) => {
         localStorage.setItem("user", JSON.stringify(data.data.user));
-        console.log(data.data.user.username);
-        connectSocket(data?.data?.user);
         Navigate("/");
       },
     }

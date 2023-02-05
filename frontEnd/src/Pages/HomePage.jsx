@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-// import socket from '../Utils/socket';
+import { connectSocket } from "../Utils/socket";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChatRecentContainer,
@@ -13,27 +13,29 @@ import {
   HomePageMessageContainer,
   HomePageTopContainer,
 } from "../Utils/Styles/Home.style";
-import { getAllChats, getAllUsers } from "../Utils/chat.api";
+import { getAllChats, getAllPastMessage, getAllUsers } from "../Utils/chat.api";
 import { useLocalStorage } from "../Utils/useLocalStorage";
-import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
 
 const HomePage = () => {
   const useStorage = new useLocalStorage();
   const navigate = useNavigate();
-  // const queryClient = useQueryClient();
-  // queryClient.invalidateQueries('Users');
+  const queryClient = useQueryClient();
 
   const userQuery = useQuery(["Users"], getAllUsers);
-  const chatQuery = useQuery(
-    ["Chat"],
-    () => getAllChats(useStorage.getUserId()),
-    {
-      onSuccess: (data) => console.log(data),
+  const chatQuery = useQuery({
+    queryKey: ["Chat"],
+    queryFn: () => getAllChats(useStorage.getUserId()),
+      onSuccess: (data) => {
+        connectSocket(useStorage.getUser());
+      },
     }
   );
 
   const startChat = async (id) => {
+    // await queryClient.prefetchQuery({
+    //   queryKey: ["Private_Chat", id],
+    //   queryFn: () => getAllPastMessage(useStorage.getUserId(), id),
+    // });
     navigate(`/chat/?${id}`);
   };
 
