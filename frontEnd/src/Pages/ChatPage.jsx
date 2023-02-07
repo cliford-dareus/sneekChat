@@ -1,76 +1,95 @@
-import React from 'react';
-import { useState } from 'react';
-import { useEffect } from 'react';
-import socket from '../Utils/socket';
+import React, { useState, useEffect, useRef } from "react";
+import { socket } from "../Utils/socket";
 import { useLocation } from "react-router-dom";
-import { useGlobalContext } from '../Context/GlobalContext';
-import axios from 'axios';
-import { useRef } from 'react';
-import { ChatBodyContainer, ChatBubble, ChatPageContainer, ChatPageForm, ChatPageTop } from '../Utils/Styles/Chat.style';
-import { Form, InputField } from '../Utils/Styles/Global.style';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Form, InputField } from "../Utils/Styles/Global.style";
+import { useMutation } from "@tanstack/react-query";
+import {
+  ChatBodyContainer,
+  ChatBubble,
+  ChatPageContainer,
+  ChatPageForm,
+  ChatPageTop,
+} from "../Utils/Styles/Chat.style";
+import { getAllPastMessage, sendMsg } from "../Utils/chat.api";
+import { useLocalStorage } from "../Utils/hooks/useLocalStorage";
 
 const ChatPage = () => {
-  const [ arrivalMsgs, setArrivalMsgs ] = useState(null);
-  const [ messages, setMessages ] = useState([]); //Add Timestamps for the messages
-  const [ text, setText ] = useState('');
-  const { user } = useGlobalContext();
+  const useStorage = new useLocalStorage();
+  const [user, setUser] = useState(useStorage.getUser());
+  const [arrivalMsgs, setArrivalMsgs] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState("");
   const scrollRef = useRef();
-  
-  const params = useLocation()
-  const to = params.search.slice(1)
 
-  const getAllPastMessage = async () => {
-    try {
-    const { data } = await axios.post(`http://localhost:5000/api/v1/msg/getmsg`,{
-        from: user.userId,
-        to: to
-    });
-    setMessages(data[0].message);
-    // console.log(data[0].message);
-    } catch (error) {
-        console.log(error);
-    };
-  };
+  const params = useLocation();
+  const to = params.search.slice(1);
 
-  const sendmessages = async(e) => {
+  const queryClient = useQueryClient();
+  const userData = queryClient.getQueryData(["Users"]);
+
+  queryClient.invalidateQueries({
+    queryKey: ["Pivate_Chat", to],
+  });
+
+  const msgQuery = useQuery({
+    queryKey: ["Private_Chat", to],
+    queryFn: () => getAllPastMessage(user.userId, to),
+    onSuccess: (data) => {
+      if (!messages && data?.data.length == 0){
+        setMessages(data?.data[0]?.message);
+        return
+      }
+    },
+    // staleTime: 5000, 
+    refetchInterval: 10000
+  });
+
+  const sendMsgMutation = useMutation({
+    mutationFn: ({ userId, to, text, time }) => {
+      return sendMsg(userId, to, text, time);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["Private_Chat", to] });
+      queryClient.invalidateQueries({ queryKey: ["Chat"] });
+    },
+  });
+
+  const sendmessages = async (e) => {
     e.preventDefault();
-    setText('');
-
+    setText("");
     const today = new Date();
     const time = today.toLocaleTimeString();
 
-    socket.emit('private_message', {
+    socket.emit("private_message", {
       msg: text,
       fromSelf: user.userId,
-      to, 
-      time
+      to,
+      time,
     });
 
-    await axios.post(`http://localhost:5000/api/v1/msg/addmsg`, {
-      from: user.userId,
-      to: to,
-      message: {
-        msg: text,
-        fromSelf: user.userId,
-        time: time,
-      },
-    });
+    const msgs = { msg: text, fromSelf: user.userId, time };
 
-    const msgs ={msg: text, fromSelf: user.userId, time };
+    sendMsgMutation.mutate({ userId: user.userId, to, text, time });
     setMessages((prev) => [...prev, msgs]);
-    console.log('message sent');
   };
 
   const handleChange = (e) => {
     e.preventDefault();
-    setText(e.target.value)
+    setText(e.target.value);
   };
 
   useEffect(() => {
-    socket.on("private_message", ({ msg, from, time }) => {
-      setArrivalMsgs({ msg , fromSelf: from, time });
+    if (!messages == 0 && msgQuery?.data?.data.length == 0) return;
+    setMessages(msgQuery?.data?.data[0]?.message);
+  }, [msgQuery.isSuccess]);
+
+  useEffect(() => {
+    socket.on("private_message", ({ msg, from, reciepient, time }) => {
+      if (from === to) {
+        setArrivalMsgs({ msg, fromSelf: from, time });
+      }
     });
-    getAllPastMessage();
   }, []);
 
   useEffect(() => {
@@ -84,42 +103,37 @@ const ChatPage = () => {
   return (
     <ChatPageContainer>
       <ChatPageTop>
-        ChatPage
+        {userData?.data.users
+          .filter((user) => user._id === to)
+          .map((user) => (
+            <strong key={user._id}>{user.username}</strong>
+          ))}
       </ChatPageTop>
 
       <ChatBodyContainer>
-        {messages.map((item)=> {
-          const isFromSelf = item.fromSelf === user.userId
-          return(
-            <ChatBubble 
-              fromSelf={isFromSelf}
-              ref={scrollRef}
-            >
-              <p>{item.msg}</p>
-            </ChatBubble>
-          )
-        })}
-        
+        {msgQuery.isFetched &&
+          messages?.map((item) => {
+            const isFromSelf = item.fromSelf === user.userId;
+            return (
+              <ChatBubble key={item._id} fromSelf={isFromSelf} ref={scrollRef}>
+                <p>{item.msg}</p>
+              </ChatBubble>
+            );
+          })}
       </ChatBodyContainer>
       <ChatPageForm>
-        <Form 
+        <Form
           style={{
-            flexDirection: 'row',
-            width: '100%'
-          }} 
+            flexDirection: "row",
+            width: "100%",
+          }}
           onSubmit={sendmessages}
         >
-          <InputField 
-            type="text" 
-            value={text}
-            onChange={handleChange}
-          />
-          <button >send</button>
+          <InputField type="text" value={text} onChange={handleChange} />
+          <button>send</button>
         </Form>
-        
       </ChatPageForm>
     </ChatPageContainer>
-    
   );
 };
 

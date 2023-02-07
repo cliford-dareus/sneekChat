@@ -2,17 +2,19 @@ import React from 'react';
 import { MdDarkMode, MdOutlineDarkMode } from 'react-icons/md';
 import { AiOutlineMail } from 'react-icons/ai';
 import { Link } from 'react-router-dom';
+import { useQuery } from "@tanstack/react-query";
 import { ProfileContainer, ProfileContentContainer, ProfileDarkmode, ProfilePageContainer, ProfilePicContainer, ProfilePreference } from '../Utils/Styles/Profile.style';
-import { useGlobalContext } from '../Context/GlobalContext';
+
 
 const ProfilePage = () => {
-  const { user } = useGlobalContext();
 
+  const userQuery = useQuery(['Users'])
+  
   return (
     <ProfilePageContainer>
       <ProfileContainer>
         <ProfilePicContainer>Profil PIc</ProfilePicContainer>
-        <strong>{user.username}</strong>
+        <strong></strong>
         <p>Lorem, ipsum ipsum.</p>
         <Link to='Cliforddareus@gmail.com'>
           <AiOutlineMail />

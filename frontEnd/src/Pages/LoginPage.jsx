@@ -1,44 +1,60 @@
-import React from 'react';
-import { useState } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom';
-import FormInput from '../Components/FormInput';
-import { Form } from '../Utils/Styles/Global.style';
-import { useNavigate } from 'react-router-dom';
-import { PageContainer, RegisterCallToAction, RegisterPageFormContainer, RegisterPageTextContainer } from '../Utils/Styles/Register.style';
-import { useGlobalContext } from '../Context/GlobalContext';
+import React from "react";
+import axios from "axios";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import FormInput from "../Components/FormInput";
+import { Form } from "../Utils/Styles/Global.style";
+import { useNavigate } from "react-router-dom";
+import {
+  PageContainer,
+  RegisterCallToAction,
+  RegisterPageFormContainer,
+  RegisterPageTextContainer,
+} from "../Utils/Styles/Register.style";
+import { useMutation } from "@tanstack/react-query";
+import { config } from "../helper/axios.config";
 
 const LoginPage = () => {
   const Navigate = useNavigate();
-  const { saveUser } = useGlobalContext()
-  const [ userInfo, setUserInfo ] = useState({
-    username: '',
-    password: ''
+  const [userInfo, setUserInfo] = useState({
+    username: "",
+    password: "",
   });
 
+  const mutation = useMutation(
+    (info) => {
+      return axios.post(
+        "http://localhost:5000/api/v1/auth/login",
+        info,
+        config
+      );
+    },
+    {
+      onSuccess: (data) => {
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        Navigate("/");
+      },
+    }
+  );
+
   const handleChange = (e) => {
-    setUserInfo({...userInfo, [e.target.name]: e.target.value});
+    setUserInfo({ ...userInfo, [e.target.name]: e.target.value });
   };
 
-  const onSubmit = async(e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-
     const { username, password } = userInfo;
     const logInUser = { username, password };
 
     try {
-      const { data } = await axios.post('http://localhost:5000/api/v1/auth/login', logInUser, { 
-      withCredentials: true,
-      credentials: 'include'});
-      saveUser(data.user);
-      setUserInfo({ username: '', password: '' });
-      connectSocket(data.user.username);
-      Navigate('/');
+      mutation.mutate(logInUser);
+
+      setUserInfo({ username: "", password: "" });
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
-  
+
   return (
     <PageContainer>
       <RegisterPageTextContainer>
@@ -47,31 +63,31 @@ const LoginPage = () => {
       </RegisterPageTextContainer>
 
       <RegisterPageFormContainer>
-          <Form onSubmit={onSubmit}>
-            <FormInput 
-              label='Username'
-              type='text'
-              name='username'
-              value={userInfo.username}
-              handleChange={handleChange}
-            />
+        <Form onSubmit={onSubmit}>
+          <FormInput
+            label="Username"
+            type="text"
+            name="username"
+            value={userInfo.username}
+            handleChange={handleChange}
+          />
 
-            <FormInput 
-              label='Password'
-              type='password'
-              name='password'
-              value={userInfo.password}
-              handleChange={handleChange}
-            />
+          <FormInput
+            label="Password"
+            type="password"
+            name="password"
+            value={userInfo.password}
+            handleChange={handleChange}
+          />
 
-            <button
-              style={{marginTop: '2em', borderRadius: '2em'}}
-            >
-              Log In
-            </button>
+          <button style={{ marginTop: "2em", borderRadius: "2em" }}>
+            Log In
+          </button>
 
-            <RegisterCallToAction>Already have an account? <Link to='/register'>Sign In Here</Link></RegisterCallToAction>
-          </Form>
+          <RegisterCallToAction>
+            Already have an account? <Link to="/register">Sign In Here</Link>
+          </RegisterCallToAction>
+        </Form>
       </RegisterPageFormContainer>
     </PageContainer>
   );
