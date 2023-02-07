@@ -1,22 +1,25 @@
-import React from 'react';
-import { MdDarkMode, MdOutlineDarkMode } from 'react-icons/md';
-import { AiOutlineMail } from 'react-icons/ai';
-import { Link } from 'react-router-dom';
-import { useQuery } from "@tanstack/react-query";
-import { ProfileContainer, ProfileContentContainer, ProfileDarkmode, ProfilePageContainer, ProfilePicContainer, ProfilePreference } from '../Utils/Styles/Profile.style';
-
+import React from "react";
+import { MdDarkMode, MdOutlineDarkMode } from "react-icons/md";
+import { AiOutlineMail } from "react-icons/ai";
+import { Link } from "react-router-dom";
+import {
+  ProfileContainer,
+  ProfileContentContainer,
+  ProfileDarkmode,
+  ProfilePageContainer,
+  ProfilePicContainer,
+  ProfilePreference,
+} from "../Utils/Styles/Profile.style";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 const ProfilePage = () => {
-
-  const userQuery = useQuery(['Users'])
-  
   return (
     <ProfilePageContainer>
       <ProfileContainer>
         <ProfilePicContainer>Profil PIc</ProfilePicContainer>
-        <strong></strong>
+        <strong>{useLocalStorage.getUser().username}</strong>
         <p>Lorem, ipsum ipsum.</p>
-        <Link to='Cliforddareus@gmail.com'>
+        <Link to="Cliforddareus@gmail.com">
           <AiOutlineMail />
         </Link>
       </ProfileContainer>

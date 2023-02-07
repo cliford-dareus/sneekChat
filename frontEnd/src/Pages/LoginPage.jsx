@@ -13,6 +13,7 @@ import {
 } from "../Utils/Styles/Register.style";
 import { useMutation } from "@tanstack/react-query";
 import { config } from "../helper/axios.config";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 const LoginPage = () => {
   const Navigate = useNavigate();
@@ -31,7 +32,7 @@ const LoginPage = () => {
     },
     {
       onSuccess: (data) => {
-        localStorage.setItem("user", JSON.stringify(data.data.user));
+        useLocalStorage.setUser(data.data.user);
         Navigate("/");
       },
     }

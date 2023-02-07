@@ -1,7 +1,12 @@
-export class useLocalStorage {
+class UseLocalStorage {
   constructor() {
     this.storage = localStorage.getItem("user") || null;
   }
+
+  setUser(user){
+    localStorage.setItem("user", JSON.stringify(user));
+  }
+
   getUserId() {
     const user = this.storage
       ? JSON.parse(localStorage.getItem("user"))
@@ -16,3 +21,5 @@ export class useLocalStorage {
     return user;
   }
 }
+
+export const useLocalStorage = new UseLocalStorage()

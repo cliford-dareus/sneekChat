@@ -75,6 +75,7 @@ socketIO.on("connection", (socket) => {
 const notification = async (socket, to) => {
   setTimeout(() => socketIO.to(to).emit("notification", {
       from: socket.userId,
+      to,
       newMessage: true,
     }), 100)
 }

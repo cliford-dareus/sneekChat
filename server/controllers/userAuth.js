@@ -93,6 +93,7 @@ const login = async (req, res ) => {
     // create refresh token
     let refreshToken = '';
     const existingToken = await Token.findOne({ user: user._id });
+    
     if(existingToken){
         const { isValid } = existingToken;
         if(!isValid){

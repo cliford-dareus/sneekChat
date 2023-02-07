@@ -12,11 +12,10 @@ import {
   ChatPageTop,
 } from "../Utils/Styles/Chat.style";
 import { getAllPastMessage, sendMsg } from "../Utils/chat.api";
-import { useLocalStorage } from "../Utils/hooks/useLocalStorage";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 const ChatPage = () => {
-  const useStorage = new useLocalStorage();
-  const [user, setUser] = useState(useStorage.getUser());
+  const [user, setUser] = useState(useLocalStorage.getUser());
   const [arrivalMsgs, setArrivalMsgs] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
