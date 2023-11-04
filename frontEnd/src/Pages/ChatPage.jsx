@@ -35,13 +35,13 @@ const ChatPage = () => {
     queryKey: ["Private_Chat", to],
     queryFn: () => getAllPastMessage(user.userId, to),
     onSuccess: (data) => {
-      if (!messages && data?.data.length == 0){
+      if (!messages && data?.data.length == 0) {
         setMessages(data?.data[0]?.message);
-        return
+        return;
       }
     },
-    // staleTime: 5000, 
-    refetchInterval: 10000
+    // staleTime: 5000,
+    refetchInterval: 10000,
   });
 
   const sendMsgMutation = useMutation({

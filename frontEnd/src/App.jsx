@@ -3,7 +3,7 @@ import Navbar from './Components/Navbar';
 import ProtectedRoute from './Components/ProtectedRoute';
 import ChatPage from './Pages/ChatPage';
 import HomePage from './Pages/HomePage';
-import LoginPage from './Pages/loginPage';
+import LoginPage from './Pages/LoginPage';
 import ProfilePage from './Pages/ProfilePage';
 import RegisterPage from './Pages/RegisterPage';
 import VerifyPage from './Pages/VerifyPage';
